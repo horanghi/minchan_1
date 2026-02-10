@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>원시인 사냥 RPG - 3D</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <!-- 시작 화면 -->
+    <div id="start-screen" class="screen">
+        <h1>🏹 원시인 사냥 RPG</h1>
+        <p class="subtitle">선사시대에서 미래까지, 문명을 발전시키고 마을을 세워라!</p>
+        <div class="controls-info">
+            <h3>조작법</h3>
+            <p><strong>WASD</strong> - 이동 | <strong>스페이스바</strong> - 공격</p>
+            <p><strong>Tab</strong> - 근접/원거리 무기 전환</p>
+            <p><strong>I</strong> - 인벤토리 | <strong>B</strong> - 상점</p>
+            <p><strong>C</strong> - 문명 강화 | <strong>V</strong> - 마을 (건설/아군 고용)</p>
+        </div>
+        <button id="start-btn" onclick="startGame()">사냥 시작!</button>
+    </div>
+
+    <!-- 사망 화면 -->
+    <div id="death-screen" class="screen" style="display:none;">
+        <h1>💀 사망했습니다</h1>
+        <p id="death-msg">야생에서 쓰러졌습니다...</p>
+        <button onclick="respawn()">부활하기</button>
+    </div>
+
+    <!-- 레벨업 화면 -->
+    <div id="levelup-screen" class="screen" style="display:none;">
+        <h1>⬆️ 레벨 업!</h1>
+        <p id="levelup-msg">레벨 2 달성!</p>
+        <p id="stat-points-msg">스킬 포인트: <span id="stat-points-display">3</span></p>
+        <div class="stat-buttons">
+            <button onclick="allocateStat('hp')">❤️ HP +20</button>
+            <button onclick="allocateStat('atk')">⚔️ 공격력 +2</button>
+            <button onclick="allocateStat('def')">🛡️ 방어력 +1</button>
+            <button onclick="allocateStat('spd')">💨 이동속도 +0.3</button>
+        </div>
+        <button onclick="closeLevelUp();toggleSkillTree();" style="margin-top:8px;padding:10px 30px;font-size:1.1rem;background:#2a6a4a;color:#fff;border:2px solid #3a9a5a;border-radius:8px;cursor:pointer;">🌳 스킬 트리 열기 (T)</button>
+        <button id="levelup-close-btn" onclick="closeLevelUp()" style="display:none;">확인</button>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-left">
+            <div class="hud-bar">
+                <span>❤️</span>
+                <div class="bar-bg"><div id="hp-bar" class="bar-fill hp"></div></div>
+                <span id="hp-text">100/100</span>
+            </div>
+            <div class="hud-bar">
+                <span>⭐</span>
+                <div class="bar-bg"><div id="xp-bar" class="bar-fill xp"></div></div>
+                <span id="xp-text">0/100</span>
+            </div>
+        </div>
+        <div class="hud-center">
+            <span id="level-display">Lv.1</span>
+            <span id="civ-display">🏛️ 구석기</span>
+            <span id="region-display">초원</span>
+            <span id="ally-count">👥 0</span>
+        </div>
+        <div class="hud-right">
+            <span id="coin-display">🪙 0</span>
+            <span id="equip-display">🗡️ 없음 | 🛡️ 없음</span>
+            <span id="mp-status" style="font-size:0.8rem;">🔴 오프라인</span>
+        </div>
+    </div>
+
+    <!-- 3D 캔버스 컨테이너 -->
+    <div id="game-container"></div>
+
+    <!-- 미니맵 -->
+    <canvas id="minimap" width="180" height="80"></canvas>
+
+    <!-- 인벤토리 패널 -->
+    <div id="inventory-panel" class="panel" style="display:none;">
+        <h2>🎒 인벤토리</h2>
+        <div id="inventory-list"></div>
+        <button class="close-btn" onclick="toggleInventory()">닫기 (I)</button>
+    </div>
+
+    <!-- 상점 패널 -->
+    <div id="shop-panel" class="panel" style="display:none;">
+        <h2>🏪 상점</h2>
+        <div class="shop-tabs">
+            <button class="shop-tab active" onclick="switchShopTab('buy')">구매</button>
+            <button class="shop-tab" onclick="switchShopTab('sell')">판매</button>
+        </div>
+        <div id="shop-buy-list" class="shop-list"></div>
+        <div id="shop-sell-list" class="shop-list" style="display:none;"></div>
+        <button class="close-btn" onclick="toggleShop()">닫기 (B)</button>
+    </div>
+
+    <!-- 문명 강화 패널 -->
+    <div id="civ-panel" class="panel" style="display:none;">
+        <h2>🏛️ 문명 강화</h2>
+        <div id="civ-info"></div>
+        <div id="civ-upgrade-section"></div>
+        <div id="civ-weapons-preview"></div>
+        <button class="close-btn" onclick="toggleCiv()">닫기 (C)</button>
+    </div>
+
+    <!-- 마을 패널 -->
+    <div id="village-panel" class="panel" style="display:none;">
+        <h2>🏘️ 마을</h2>
+        <div id="village-info"></div>
+        <div id="village-build-list"></div>
+        <div id="village-ally-list"></div>
+        <button class="close-btn" onclick="toggleVillage()">닫기 (V)</button>
+    </div>
+
+    <!-- 도감 패널 -->
+    <div id="bestiary-panel" class="panel" style="display:none;">
+        <h2>📖 도감</h2>
+        <div id="bestiary-tabs" style="display:flex;gap:4px;margin-bottom:8px;"></div>
+        <div id="bestiary-list" style="max-height:400px;overflow-y:auto;"></div>
+        <button class="close-btn" onclick="toggleBestiary()">닫기 (G)</button>
+    </div>
+
+    <!-- 스킬 트리 패널 -->
+    <div id="skill-tree-panel" class="panel skill-tree-panel" style="display:none;">
+        <h2>🌳 스킬 트리</h2>
+        <div id="skill-tree-content"></div>
+        <button class="close-btn" onclick="toggleSkillTree()">닫기 (T)</button>
+    </div>
+
+    <!-- 채팅 -->
+    <div id="chat-container">
+        <div id="chat-messages"></div>
+        <div id="chat-input-row">
+            <input id="chat-input" type="text" placeholder="Enter로 채팅 (/name 이름변경)" maxlength="200" autocomplete="off">
+            <button id="chat-send-btn" onclick="sendChatFromInput()">전송</button>
+        </div>
+    </div>
+
+    <!-- 하단 안내 -->
+    <div id="bottom-bar">
+        <span>[WASD] 이동</span>
+        <span>[Space] 공격</span>
+        <span>[Tab] 무기전환</span>
+        <span>[I] 인벤토리</span>
+        <span>[B] 상점</span>
+        <span>[C] 문명</span>
+        <span>[V] 마을</span>
+        <span>[T] 스킬</span>
+        <span>[G] 도감</span>
+        <span>[Enter] 채팅</span>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
