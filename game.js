@@ -1617,6 +1617,153 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => { if(!isChatFocused()) keys[e.code] = false; });
 
+// ── 모바일 감지 & 터치 컨트롤 ──
+const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 768);
+
+// 모바일: 브라우저 기본 터치 제스처 방지 (풀투리프레시, 바운스스크롤, 핀치줌)
+if (isMobile) {
+    document.body.style.touchAction = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    document.addEventListener('touchmove', e => {
+        // 패널 내부 스크롤은 허용, 나머지는 차단
+        if (!e.target.closest('.panel') && !e.target.closest('#chat-messages')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+}
+
+function initMobileControls() {
+    if (!isMobile) return;
+    const mc = document.getElementById('mobile-controls');
+    if (!mc) return;
+    mc.style.display = 'block';
+
+    // 조이스틱
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickBase = document.getElementById('joystick-base');
+    const joystickThumb = document.getElementById('joystick-thumb');
+    let joystickTouchId = null;
+    const joystickRadius = 60; // max distance from center
+
+    function getJoystickCenter() {
+        const rect = joystickBase.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+
+    function resetJoystick() {
+        joystickTouchId = null;
+        joystickThumb.style.transform = 'translate(0px, 0px)';
+        keys['KeyW'] = false; keys['KeyS'] = false;
+        keys['KeyA'] = false; keys['KeyD'] = false;
+    }
+
+    joystickZone.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickTouchId = touch.identifier;
+        updateJoystick(touch);
+    }, { passive: false });
+
+    joystickZone.addEventListener('touchmove', e => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joystickTouchId) {
+                updateJoystick(e.changedTouches[i]);
+                break;
+            }
+        }
+    }, { passive: false });
+
+    joystickZone.addEventListener('touchend', e => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joystickTouchId) {
+                resetJoystick();
+                break;
+            }
+        }
+    });
+
+    joystickZone.addEventListener('touchcancel', resetJoystick);
+
+    function updateJoystick(touch) {
+        const center = getJoystickCenter();
+        let dx = touch.clientX - center.x;
+        let dy = touch.clientY - center.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > joystickRadius) {
+            dx = dx / dist * joystickRadius;
+            dy = dy / dist * joystickRadius;
+        }
+        joystickThumb.style.transform = `translate(${dx}px, ${dy}px)`;
+
+        // 방향 입력 (데드존 15%)
+        const deadZone = joystickRadius * 0.15;
+        keys['KeyW'] = dy < -deadZone;
+        keys['KeyS'] = dy > deadZone;
+        keys['KeyA'] = dx < -deadZone;
+        keys['KeyD'] = dx > deadZone;
+    }
+
+    // 공격 버튼 (누르고 있으면 연속 공격)
+    const btnAttack = document.getElementById('btn-attack');
+    let attackTouchId = null;
+    btnAttack.addEventListener('touchstart', e => {
+        e.preventDefault();
+        attackTouchId = e.changedTouches[0].identifier;
+        keys['Space'] = true;
+    }, { passive: false });
+    btnAttack.addEventListener('touchend', e => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === attackTouchId) {
+                keys['Space'] = false;
+                attackTouchId = null;
+                break;
+            }
+        }
+    });
+    btnAttack.addEventListener('touchcancel', () => {
+        keys['Space'] = false;
+        attackTouchId = null;
+    });
+
+    // 무기 전환 버튼
+    const btnWeapon = document.getElementById('btn-weapon');
+    btnWeapon.addEventListener('touchstart', e => {
+        e.preventDefault();
+        toggleWeaponMode();
+    }, { passive: false });
+
+    // 채팅 토글 버튼
+    const btnChat = document.getElementById('btn-chat');
+    if (btnChat) {
+        btnChat.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const ci = document.getElementById('chat-input');
+            if (ci) {
+                if (document.activeElement === ci) { ci.blur(); }
+                else { ci.focus(); }
+            }
+        }, { passive: false });
+    }
+
+    // 메뉴 버튼
+    document.querySelectorAll('.mobile-menu-btn').forEach(btn => {
+        btn.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const action = btn.dataset.action;
+            if (gameState !== 'playing') return;
+            switch(action) {
+                case 'inventory': toggleInventory(); break;
+                case 'shop': toggleShop(); break;
+                case 'civ': toggleCiv(); break;
+                case 'village': toggleVillage(); break;
+                case 'skill': toggleSkillTree(); break;
+                case 'bestiary': toggleBestiary(); break;
+            }
+        }, { passive: false });
+    });
+}
+
 function toggleWeaponMode() {
     player.weaponMode = player.weaponMode === 'melee' ? 'ranged' : 'melee';
     addFloatingText(player.x, player.z, player.weaponMode === 'melee' ? '⚔️ 근접' : '🏹 원거리', '#ffaa00', 40);
@@ -1653,9 +1800,18 @@ function initThree() {
 
 function updateRendererSize() {
     const w = container.clientWidth || window.innerWidth;
-    const h = container.clientHeight || (window.innerHeight - 86);
+    const h = container.clientHeight || (window.innerHeight - (isMobile ? 36 : 86));
     renderer.setSize(w, h);
     if(cameraObj) { cameraObj.aspect = w / h; cameraObj.updateProjectionMatrix(); }
+    // 모바일 성능 최적화: 섀도우맵 해상도 낮춤
+    if (isMobile) {
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        scene.traverse(obj => {
+            if (obj.isDirectionalLight && obj.shadow) {
+                obj.shadow.mapSize.set(1024, 1024);
+            }
+        });
+    }
 }
 
 function buildWorld() {
@@ -1704,7 +1860,7 @@ function buildPlayer() {
     if (playerGroup) scene.remove(playerGroup);
     playerGroup = new THREE.Group();
     const civ = CIVILIZATIONS[player.civLevel];
-    const PS = 3; // 플레이어 스케일 (3배)
+    const PS = 1.5; // 플레이어 스케일 (기존 3에서 절반으로 축소)
 
     // ── 몸통 (갑옷 형태) ──
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.4,0.55), new THREE.MeshLambertMaterial({color:civ.armorColor}));
@@ -2607,6 +2763,7 @@ function startGame() {
     for(let i=0;i<60;i++) spawnRandomAnimal();
     startBGM();
     mpConnect();
+    initMobileControls();
     gameLoop();
 }
 

@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>원시인 사냥 RPG - 3D</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -150,6 +150,31 @@
         <span>[T] 스킬</span>
         <span>[G] 도감</span>
         <span>[Enter] 채팅</span>
+    </div>
+
+    <!-- 모바일 터치 컨트롤 -->
+    <div id="mobile-controls" style="display:none;">
+        <!-- 상단 메뉴 버튼 -->
+        <div id="mobile-menu-bar">
+            <button class="mobile-menu-btn" data-action="inventory">배낭</button>
+            <button class="mobile-menu-btn" data-action="shop">상점</button>
+            <button class="mobile-menu-btn" data-action="civ">문명</button>
+            <button class="mobile-menu-btn" data-action="village">마을</button>
+            <button class="mobile-menu-btn" data-action="skill">스킬</button>
+            <button class="mobile-menu-btn" data-action="bestiary">도감</button>
+        </div>
+        <!-- 왼쪽: 가상 조이스틱 -->
+        <div id="joystick-zone">
+            <div id="joystick-base">
+                <div id="joystick-thumb"></div>
+            </div>
+        </div>
+        <!-- 오른쪽: 액션 버튼 -->
+        <div id="action-buttons">
+            <button id="btn-attack" class="action-btn attack-btn">공격</button>
+            <button id="btn-weapon" class="action-btn weapon-btn">전환</button>
+            <button id="btn-chat" class="action-btn chat-toggle-btn">채팅</button>
+        </div>
     </div>
 
     <script src="game.js"></script>

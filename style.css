@@ -525,3 +525,224 @@ body {
 }
 
 #chat-send-btn:hover { background: #6b4a3a; }
+
+/* ═══ 모바일 터치 컨트롤 ═══ */
+#mobile-controls {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 30;
+}
+
+#mobile-menu-bar {
+    position: absolute;
+    top: 38px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 3px;
+    pointer-events: auto;
+    z-index: 31;
+}
+
+.mobile-menu-btn {
+    padding: 8px 11px;
+    font-size: 0.75rem;
+    background: rgba(42, 31, 20, 0.9);
+    color: #e0d6c2;
+    border: 1px solid #5a4a3a;
+    border-radius: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.mobile-menu-btn:active {
+    background: #8b5e3c;
+    transform: scale(0.95);
+}
+
+#joystick-zone {
+    position: absolute;
+    bottom: 20px;
+    left: 16px;
+    width: 140px;
+    height: 140px;
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none;
+}
+
+#joystick-base {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#joystick-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(244, 164, 96, 0.75);
+    border: 3px solid rgba(244, 164, 96, 0.95);
+    position: absolute;
+    transition: none;
+    box-shadow: 0 0 10px rgba(244, 164, 96, 0.3);
+}
+
+#action-buttons {
+    position: absolute;
+    bottom: 20px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    pointer-events: auto;
+    align-items: center;
+}
+
+.action-btn {
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #fff;
+    border: 3px solid;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.attack-btn {
+    width: 76px;
+    height: 76px;
+    background: rgba(192, 57, 43, 0.75);
+    border-color: #e74c3c;
+    font-size: 0.9rem;
+}
+
+.attack-btn:active {
+    background: rgba(231, 76, 60, 0.95);
+    transform: scale(0.93);
+}
+
+.weapon-btn {
+    background: rgba(41, 128, 185, 0.75);
+    border-color: #3498db;
+    width: 58px;
+    height: 58px;
+    font-size: 0.7rem;
+}
+
+.weapon-btn:active {
+    background: rgba(52, 152, 219, 0.95);
+    transform: scale(0.93);
+}
+
+.chat-toggle-btn {
+    background: rgba(90, 74, 58, 0.75);
+    border-color: #8b7a6a;
+    width: 46px;
+    height: 46px;
+    font-size: 0.6rem;
+}
+
+.chat-toggle-btn:active {
+    background: rgba(139, 94, 60, 0.9);
+    transform: scale(0.93);
+}
+
+/* ═══ 모바일 반응형 ═══ */
+@media (max-width: 768px) {
+    /* 시작 화면 */
+    .screen h1 { font-size: 1.8rem; }
+    .screen .subtitle { font-size: 0.9rem; margin-bottom: 1rem; }
+    .screen button { padding: 10px 28px; font-size: 1rem; }
+    .controls-info { padding: 0.6rem 1rem; margin-bottom: 1rem; }
+    .controls-info p { font-size: 0.8rem; }
+    .stat-buttons button { font-size: 0.85rem; padding: 8px 14px; }
+
+    /* 게임 컨테이너 터치 최적화 */
+    #game-container { touch-action: none; }
+
+    /* HUD 축소 */
+    #hud {
+        height: 36px;
+        padding: 3px 8px;
+        font-size: 0.7rem;
+    }
+    .hud-left { gap: 8px; }
+    .hud-bar { gap: 3px; font-size: 0.7rem; }
+    .bar-bg { width: 60px; height: 10px; }
+    .hud-center { gap: 6px; font-size: 0.7rem; }
+    .hud-right { gap: 6px; font-size: 0.7rem; }
+    #equip-display { display: none; }
+    #mp-status { display: none; }
+
+    /* 하단바 숨김 */
+    #bottom-bar { display: none !important; }
+
+    /* 시작화면 키보드 조작법 숨김 (모바일에서는 터치 컨트롤 사용) */
+    .controls-info { display: none; }
+
+    /* 패널 반응형 */
+    .panel {
+        min-width: unset;
+        max-width: unset;
+        width: 92vw;
+        max-height: 80vh;
+        padding: 14px;
+    }
+    .panel h2 { font-size: 1.1rem; margin-bottom: 8px; }
+
+    /* 스킬 트리 반응형 */
+    .skill-tree-panel {
+        min-width: unset;
+        max-width: unset;
+        width: 96vw;
+        max-height: 85vh;
+    }
+    .st-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px 4px;
+    }
+    .st-node { padding: 5px 2px; min-height: 55px; }
+    .st-icon { font-size: 1.1rem; }
+    .st-name { font-size: 0.55rem; }
+    .st-cost { font-size: 0.5rem; }
+
+    /* 미니맵: 우측 상단으로 이동 */
+    #minimap {
+        width: 100px;
+        height: 42px;
+        bottom: auto;
+        top: 72px;
+        right: 6px;
+    }
+
+    /* 채팅 축소 */
+    #chat-container {
+        width: 200px;
+        bottom: 155px;
+        left: 6px;
+    }
+    #chat-messages { max-height: 100px; font-size: 0.7rem; }
+    #chat-input { font-size: 0.75rem; padding: 4px 6px; }
+    #chat-send-btn { font-size: 0.7rem; padding: 4px 8px; }
+
+    /* 레벨업 화면 */
+    #levelup-screen h1 { font-size: 1.5rem; }
+    #levelup-screen p { font-size: 0.85rem; }
+}
