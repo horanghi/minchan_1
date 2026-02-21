@@ -674,9 +674,13 @@ document.addEventListener('keydown', e => {
 });
 
 let ts=null;
-document.addEventListener('touchstart',e=>{ts={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+document.addEventListener('touchstart',e=>{
+  // D-pad 버튼 터치는 스와이프 핸들러에서 제외
+  if(e.target.closest('#dpad')) return;
+  ts={x:e.touches[0].clientX,y:e.touches[0].clientY};
+},{passive:true});
 document.addEventListener('touchend',e=>{
-  if(!ts) return;
+  if(!ts || e.target.closest('#dpad')) { ts=null; return; }
   const dx=e.changedTouches[0].clientX-ts.x, dy=e.changedTouches[0].clientY-ts.y;
   const dist=Math.hypot(dx,dy);
   if(dist<20) tryMove(0,-1);
@@ -685,7 +689,13 @@ document.addEventListener('touchend',e=>{
   ts=null;
 },{passive:true});
 
+// D-pad: touchstart로 즉시 반응 (click 300ms 지연 제거)
 document.querySelectorAll('#dpad button').forEach(b => {
+  b.addEventListener('touchstart', e => {
+    e.stopPropagation();
+    tryMove(+b.dataset.dx, +b.dataset.dz);
+  }, {passive:true});
+  // 데스크톱 폴백
   b.addEventListener('click', () => tryMove(+b.dataset.dx, +b.dataset.dz));
 });
 
